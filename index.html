@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The EYE</title>
+    <link rel="icon" type="image/png" href="images/eyeball.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+            background: #1a1a1a;
+        }
+
+        /* Container to ensure full coverage */
+        .socket-container {
+            position: fixed;
+            top: -50px;
+            left: -50px;
+            width: calc(100% + 100px);
+            height: calc(100% + 100px);
+            z-index: 2;
+            animation: smoothOrganicMovement 12s ease-in-out infinite;
+            pointer-events: auto; /* Enable clicks for socket fade effect */
+        }
+
+        /* Eye Socket - Much larger to prevent background showing */
+        .eye-socket {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('images/socket.png') no-repeat center center;
+            background-size: 150% 150%; /* Much larger to ensure coverage */
+            z-index: 2;
+            pointer-events: auto; /* Enable clicks for socket fade effect */
+            transition: background-image 0.4s ease-in-out;
+        }
+
+        .eye-socket.clicked {
+            background: url('images/socket2.png') no-repeat center center;
+            background-size: 150% 150%;
+        }
+
+        /* Eyeball - Behind socket, follows mouse pointer */
+        .eyeball {
+            position: fixed;
+            width: 180%;
+            height: 180%;
+            background: url('images/eyeball.png') no-repeat center center;
+            background-size: contain;
+            z-index: 1;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s ease-out; /* Very fast for precise positioning */
+            cursor: pointer;
+            transform-style: preserve-3d; /* Enable 3D transforms */
+            perspective: 1000px; /* Add depth perspective */
+        }
+
+        /* Smooth organic movement for socket container - no rapid changes */
+        @keyframes smoothOrganicMovement {
+            0% { 
+                transform: translate(0px, 0px) scale(1.05) rotate(0deg);
+            }
+            20% { 
+                transform: translate(8px, -12px) scale(1.05) rotate(0.3deg);
+            }
+            40% { 
+                transform: translate(-6px, 8px) scale(1.03) rotate(-0.2deg);
+            }
+            60% { 
+                transform: translate(12px, 4px) scale(1.04) rotate(0.4deg);
+            }
+            80% { 
+                transform: translate(-4px, -8px) scale(1.05) rotate(-0.1deg);
+            }
+            100% { 
+                transform: translate(0px, 0px) scale(1.05) rotate(0deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Eyeball (behind) - MECHANIC 1: Follows pointer -->
+    <div class="eyeball" id="eyeball"></div>
+    
+    <!-- Socket Container (front) - MECHANIC 2: Smooth organic movement -->
+    <div class="socket-container" id="socketContainer">
+        <div class="eye-socket"></div>
+    </div>
+
+    <script>
+        const eyeball = document.getElementById('eyeball');
+        const socketContainer = document.getElementById('socketContainer');
+        
+        // Get screen center
+        let centerX = window.innerWidth / 2;
+        let centerY = window.innerHeight / 2;
+        const maxMovement = 100;
+        
+        // MECHANIC 1: Eyeball follows mouse pointer
+        document.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            
+            // Calculate distance from center
+            const dx = mouseX - centerX;
+            const dy = mouseY - centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx);
+            
+            // Iris should be exactly where the pointer is
+            const moveDistance = Math.min(distance * 0.4, maxMovement); // Higher sensitivity for precise positioning
+            
+            // Calculate new position - iris moves to pointer location
+            const moveX = Math.cos(angle) * moveDistance;
+            const moveY = Math.sin(angle) * moveDistance;
+            
+            // Add rotation for dynamic 3D effect
+            const rotationX = (moveY / maxMovement) * 15; // Tilt based on vertical movement
+            const rotationY = (moveX / maxMovement) * 15; // Tilt based on horizontal movement
+            
+            // Apply movement and rotation to both eyeballs (MECHANIC 1)
+            const transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px)) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+            eyeball.style.transform = transform;
+        });
+        
+        // MECHANIC 2: Smooth organic socket movement (no rapid changes)
+        
+        // Add gentle organic movements to socket container (less frequent, smoother)
+        setInterval(() => {
+            if (Math.random() < 0.2) { // 20% chance every 5 seconds (less frequent)
+                const gentleX = (Math.random() - 0.5) * 15; // Smaller movement
+                const gentleY = (Math.random() - 0.5) * 15;
+                const gentleScale = 1.02 + Math.random() * 0.06; // Smaller scale change
+                const gentleRotate = (Math.random() - 0.5) * 2; // Smaller rotation
+                
+                // Smooth transition instead of sudden change
+                socketContainer.style.transition = 'transform 3s ease-in-out';
+                socketContainer.style.transform = `translate(${gentleX}px, ${gentleY}px) scale(${gentleScale}) rotate(${gentleRotate}deg)`;
+                
+                // Return to normal animation after transition
+                setTimeout(() => {
+                    socketContainer.style.transition = '';
+                    socketContainer.style.animation = 'smoothOrganicMovement 12s ease-in-out infinite';
+                }, 3000);
+            }
+        }, 5000); // Longer interval for less frequent changes
+        
+        // Update center on window resize
+        window.addEventListener('resize', () => {
+            centerX = window.innerWidth / 2;
+            centerY = window.innerHeight / 2;
+        });
+
+        // MECHANIC 3: Click effect - socket fades to socket2 on click
+        const eyeSocket = document.querySelector('.eye-socket');
+        
+        eyeSocket.addEventListener('mousedown', () => {
+            console.log('Socket clicked - adding clicked class');
+            eyeSocket.classList.add('clicked');
+        });
+
+        eyeSocket.addEventListener('mouseup', () => {
+            console.log('Socket released - removing clicked class');
+            eyeSocket.classList.remove('clicked');
+        });
+
+        // Also handle mouse leave to ensure it returns to normal
+        eyeSocket.addEventListener('mouseleave', () => {
+            console.log('Mouse left socket - removing clicked class');
+            eyeSocket.classList.remove('clicked');
+        });
+
+        // Add click event to document to test if clicks are working
+        document.addEventListener('click', (e) => {
+            console.log('Document clicked at:', e.clientX, e.clientY);
+        });
+    </script>
+</body>
+</html> 
